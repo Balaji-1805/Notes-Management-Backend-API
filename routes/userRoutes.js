@@ -5,6 +5,6 @@ const protect=require("../middlewares/verifyToken.js");
 
 router.post("/register",userController.register);
 router.post("/login",userController.login);
-router.get("/getUsers",protect,userController.getUsers);
+router.get("/getUsers",userController.getUsers);
 
 module.exports=router;
