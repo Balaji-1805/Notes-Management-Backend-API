@@ -78,4 +78,20 @@ const deleteNote=async(req,res)=>{
     }
 }
 
-module.exports={createNotes,getNotes,updateNotes,deleteNote};
+//fetching single note
+const getNote=async(req,res)=>{
+    const {id}=req.params;
+    try
+    {
+        const note=await Note.findById(id);
+        if(!note) return res.status(404).json({error:"Note not found"});
+        res.status(200).json({message:"Note found",note});
+    }
+    catch(err)
+    {
+        console.log("Error in getNote controller:",err);
+        res.status(500).json({error:"Internal Server Error"});
+    }
+}
+
+module.exports={createNotes,getNotes,updateNotes,deleteNote,getNote};

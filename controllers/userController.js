@@ -2,7 +2,11 @@ const User=require("../models/User.js");
 const jwt=require("jsonwebtoken");
 const bcrypt=require("bcrypt");
 const dotenv=require("dotenv");
+const nodemailer=require("nodemailer");
+const crypto=require("crypto");
+
 dotenv.config();
+
 
 
 const key=process.env.secretKey;
@@ -38,11 +42,19 @@ const login=async(req,res)=>{
     {
         let user=await User.findOne({email});
         if(!user) return res.status(404).json({error:"Email not found"});
-        const isMatch=bcrypt.compare(password,user.password);
+        const isMatch=await bcrypt.compare(password,user.password);
         if(!isMatch) return res.status(400).json({error:"Invalid credentials"});
         const token=jwt.sign({id:user._id},key,{expiresIn:"1d"});
         console.log(user,token);
-        res.status(200).json({message:"Login Successful!"});
+        res.status(200).json({
+        message: "Login Successful!",
+        token,                      // send token
+        user: {
+            id: user._id,
+            email: user.email,
+            userName: user.userName
+        }
+         });
     }
     catch(err)
     {
@@ -62,4 +74,70 @@ const getUsers=async(req,res)=>{
     }
 }
 
-module.exports={register,login,getUsers};
+//forgot password controller function
+
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ error: 'Invalid Email, Please Enter Valid Email' });
+
+        let token;
+        token = crypto.randomBytes(32).toString('hex');
+        user.resetToken = token;
+        user.resetTokenExpiry = Date.now() + 1000 * 60 * 15;
+
+        await user.save();
+
+        const resetLink = `http://localhost:5173/reset-password/${token}`;
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.USER_EMAIL,
+                pass: process.env.USER_PASS
+            }
+        });
+
+        await transporter.sendMail({
+            to: user.email,
+            subject: "Password Reset Link",
+            html: `<a href="${resetLink}">Click Here to reset your Password</a>`
+        });
+
+        console.log("Reset Link Sent");
+        console.log(user.email);
+        res.json({ message: "Reset link Sent",token });
+    } 
+    catch (err) {
+        console.log("Error in Forgot Password controller:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+//reset password
+const resetPassword=async(req,res)=>{
+    try
+    {
+        const {token}=req.params;
+        const {newPassword}=req.body;
+        const user=await User.findOne({
+            resetToken:token,
+            resetTokenExpiry:{$gt:Date.now()},//checks whether it is expired or not
+        });
+        if(!user) return res.status(400).json({error:"Invalid or Expired Token"});
+        const updatePassword=await bcrypt.hash(newPassword,10);
+        user.password=updatePassword;
+        user.resetToken=undefined;
+        user.resetTokenExpiry=undefined;
+        await user.save();
+        res.status(200).json({message:"Password reset successfully!"});
+    }
+    catch(err)
+    {
+        console.log("Error in reset password controller:",err);
+        res.status(500).json({error:"Internal Server Error"});
+    }
+}
+
+module.exports={register,login,getUsers,forgotPassword,resetPassword};

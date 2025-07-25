@@ -14,6 +14,8 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true,
     },
+    resetToken:String,
+    resetTokenExpiry:Date,
     notes:[
         {
             type:mongoose.Schema.Types.ObjectId,
