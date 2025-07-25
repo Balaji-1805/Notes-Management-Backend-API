@@ -89,7 +89,7 @@ const forgotPassword = async (req, res) => {
 
         await user.save();
 
-        const resetLink = `http://localhost:5173/reset-password/${token}`;
+        const resetLink = `https://notes-management-frontend-ui.vercel.app/reset-password/${token}`;
 
         const transporter = nodemailer.createTransport({
             service: "gmail",
