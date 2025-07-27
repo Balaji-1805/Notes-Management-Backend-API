@@ -80,7 +80,7 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: 'Invalid Email, Please Enter Valid Email' });
+        if (!user) return res.status(200).json({ message: 'Invalid Email, Please Enter Valid Email' });
 
         let token;
         token = crypto.randomBytes(32).toString('hex');
