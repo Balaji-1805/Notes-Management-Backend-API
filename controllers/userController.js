@@ -41,14 +41,14 @@ const login=async(req,res)=>{
     try
     {
         let user=await User.findOne({email});
-        if(!user) return res.status(404).json({error:"Email not found"});
+        if(!user) return res.status(404).json({message:"Email not found"});
         const isMatch=await bcrypt.compare(password,user.password);
-        if(!isMatch) return res.status(400).json({error:"Invalid credentials"});
+        if(!isMatch) return res.status(400).json({message:"Invalid credentials"});
         const token=jwt.sign({id:user._id},key,{expiresIn:"1d"});
         console.log(user,token);
         res.status(200).json({
         message: "Login Successful!",
-        token,                      // send token
+        token,         
         user: {
             id: user._id,
             email: user.email,
@@ -80,7 +80,7 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: 'Invalid Email, Please Enter Valid Email' });
+        if (!user) return res.status(404).json({ message: 'Invalid Email, Please Enter Valid Email' });
 
         let token;
         token = crypto.randomBytes(32).toString('hex');
